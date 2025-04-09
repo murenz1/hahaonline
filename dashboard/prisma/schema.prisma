@@ -1,0 +1,384 @@
+model Invoice {
+  id          String   @id @default(cuid())
+  number      String   @unique
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String
+  amount      Float
+  dueDate     DateTime
+  status      String   // paid, pending, overdue
+  date        DateTime @default(now())
+  items       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Expense {
+  id            String   @id @default(cuid())
+  date          DateTime
+  description   String
+  amount        Float
+  category      String
+  paymentMethod String
+  status        String   // pending, approved, rejected
+  receipt       String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  name        String
+  amount      Float
+  category    String
+  period      String   // monthly, quarterly, yearly
+  startDate   DateTime
+  endDate     DateTime
+  status      String   // active, completed, cancelled
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TaxRecord {
+  id            String   @id @default(cuid())
+  type          String
+  amount        Float
+  rate          Float
+  taxableAmount Float
+  deductions    Float
+  dueDate       DateTime
+  status        String   // pending, paid, overdue
+  jurisdiction  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FinancialReport {
+  id        String   @id @default(cuid())
+  type      String   // income_statement, balance_sheet, cash_flow
+  period    String
+  format    String   // pdf, excel, csv
+  data      Json
+  fileUrl   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  type          String   // invoice, subscription, refund
+  amount        Float
+  status        String   // pending, completed, failed, refunded
+  date          DateTime @default(now())
+  description   String?
+  reference     String?
+  customer      Customer @relation(fields: [customerId], references: [id])
+  customerId    String
+  paymentMethod String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SystemSettings {
+  id              Int      @id @default(1)
+  siteName        String
+  siteDescription String?
+  timezone        String
+  dateFormat      String
+  timeFormat      String
+  currency        String
+  language        String
+  theme           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UserSettings {
+  id                 String   @id @default(cuid())
+  userId            String   @unique
+  notifications     Json
+  emailPreferences  Json
+  displayPreferences Json
+  accessibility     Json
+  privacy           Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model IntegrationSettings {
+  id       String   @id @default(cuid())
+  name     String
+  apiKey   String?
+  apiSecret String?
+  endpoint  String?
+  enabled   Boolean  @default(false)
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PaymentSettings {
+  id                    Int      @id @default(1)
+  defaultCurrency       String
+  supportedCurrencies   Json
+  paymentMethods        Json
+  taxSettings           Json
+  gatewayConfigurations Json
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model LoggingSettings {
+  id             Int      @id @default(1)
+  level          String
+  retention      Int
+  destinations   Json
+  enabledEvents  Json
+  excludedPaths  Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model User {
+  id          String        @id @default(cuid())
+  name        String
+  email       String        @unique
+  password    String
+  role        String        @default("USER") // USER, ADMIN, MANAGER
+  status      String?       @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  lastActive  DateTime?
+  settings    UserSettings?
+  activities  UserActivity[]
+  profile     UserProfile?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model UserActivity {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  details    Json?
+  timestamp  DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+}
+
+model UserProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  avatar       String?
+  displayName  String?
+  bio          String?
+  location     String?
+  phoneNumber  String?
+  jobTitle     String?
+  department   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  location    String?
+  invoices    Invoice[]
+  payments    Payment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AppVersion {
+  id            String    @id @default(cuid())
+  versionNumber String
+  releaseNotes  String?
+  platform      String    // iOS, Android, Web
+  minOsVersion  String?
+  isForced      Boolean   @default(false)
+  status        String    // PENDING, RELEASED, DEPRECATED
+  releaseDate   DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model AppAnalytics {
+  id          String    @id @default(cuid())
+  date        DateTime  @unique
+  totalUsers  Int
+  newUsers    Int
+  activeUsers Int
+  sessions    Int
+  crashes     Int
+  retention   Float
+  platform    String?   // iOS, Android, Web
+  version     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model PushNotification {
+  id           String    @id @default(cuid())
+  title        String
+  body         String
+  data         Json?
+  targetType   String    // ALL, SEGMENT, INDIVIDUAL
+  targetUsers  Json?     // Array of user IDs
+  scheduledFor DateTime
+  status       String    // SCHEDULED, SENT, FAILED
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model AppStoreInfo {
+  id                Int       @id @default(1)
+  appName           String
+  description       String
+  shortDescription  String?
+  keywords          String?
+  privacyPolicyUrl  String?
+  supportUrl        String?
+  marketingUrl      String?
+  screenshots       Json?
+  icon              String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Campaign {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  budget         Float?
+  targetAudience Json?
+  channels       Json?
+  goals          Json?
+  status         String    // DRAFT, ACTIVE, PAUSED, COMPLETED
+  results        Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Promotion {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  code        String    @unique
+  type        String    // PERCENTAGE, FIXED_AMOUNT, FREE_SHIPPING
+  value       Float     // Percentage or amount
+  minPurchase Float?
+  maxDiscount Float?
+  startDate   DateTime
+  endDate     DateTime?
+  usageLimit  Int?
+  usageCount  Int       @default(0)
+  status      String    // ACTIVE, INACTIVE, EXPIRED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model EmailTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  subject     String
+  content     String         @db.Text
+  category    String?        // WELCOME, ORDER_CONFIRMATION, MARKETING
+  isDefault   Boolean        @default(false)
+  campaigns   EmailCampaign[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model EmailCampaign {
+  id            String        @id @default(cuid())
+  name          String
+  templateId    String
+  template      EmailTemplate @relation(fields: [templateId], references: [id])
+  subject       String
+  content       String        @db.Text
+  recipientType String        // ALL, SEGMENT, INDIVIDUAL
+  recipientIds  Json?         // Array of user/customer IDs
+  scheduledFor  DateTime
+  status        String        // SCHEDULED, SENT, FAILED
+  sentAt        DateTime?
+  sentCount     Int?          @default(0)
+  openCount     Int?          @default(0)
+  clickCount    Int?          @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model SocialMediaPost {
+  id           String    @id @default(cuid())
+  content      String
+  mediaUrls    Json?     // Array of media URLs
+  platforms    Json      // Array of platforms (FACEBOOK, TWITTER, INSTAGRAM)
+  scheduledFor DateTime
+  status       String    // DRAFT, SCHEDULED, PUBLISHED, FAILED
+  publishedAt  DateTime?
+  campaign     String?   // Campaign ID
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model CustomerSegment {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  criteria      Json      // Segmentation criteria
+  customerCount Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  items       OrderItem[]
+  total       Float
+  status      String      // PENDING, PROCESSING, COMPLETED, CANCELLED
+  paymentId   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id])
+  productId   String
+  quantity    Int
+  unitPrice   Float
+  total       Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int       @default(0)
+  category    String?
+  sku         String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Report {
+  id           String    @id @default(cuid())
+  type         String    // sales, customer, inventory, marketing, financial_*
+  period       String    // day, week, month, year, custom
+  format       String    // pdf, excel, csv
+  fileUrl      String
+  generatedBy  String    // User ID
+  createdAt    DateTime  @default(now())
+} 
