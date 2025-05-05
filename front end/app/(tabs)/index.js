@@ -63,7 +63,7 @@ const categories = [
       Kinyarwanda: "Inyama n'Amafi",
       French: "Viande et Poisson"
     },
-    icon: "fish-outline"
+    icon: "restaurant-outline"
   },
   {
     id: 6,

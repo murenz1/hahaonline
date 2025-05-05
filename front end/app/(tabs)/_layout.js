@@ -70,15 +70,12 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{ 
         headerShown: false,
-        tabBarStyle: { display: 'none' },
       }}
-      tabBar={props => <CustomTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarLabel: 'Home',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
         }}
       />

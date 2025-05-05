@@ -12,19 +12,25 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import api from '../../lib/api'; 
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
-      return;
+  const handleSubmit = async () => {
+    try {
+      if (!email) {
+        Alert.alert('Error', 'Please enter your email address');
+        return;
+      }
+      
+      await api.post('/auth/reset-password', { email });
+      setIsSubmitted(true);
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to send password reset email. Please try again.');
     }
-    // In a real app, you would send a password reset email
-    setIsSubmitted(true);
   };
 
   const handleBackToLogin = () => {

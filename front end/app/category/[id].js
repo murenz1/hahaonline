@@ -392,8 +392,23 @@ export default function CategoryScreen() {
   const { id, language } = useLocalSearchParams();
   const categoryId = parseInt(id);
 
-  // Filter products by category
-  const categoryProducts = products.filter(product => product.categoryId === categoryId);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get(`/products/${categoryId}`);
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [categoryId]);
 
   const getCategoryName = () => {
     return categories[categoryId]?.[language] || categories[categoryId]?.English;

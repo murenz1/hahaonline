@@ -8,10 +8,13 @@ import {
   Image, 
   KeyboardAvoidingView, 
   Platform,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '../../lib/storage';
+import api from '../../lib/api';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -20,10 +23,68 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
-    // In a real app, you would implement actual authentication
-    // For now, we'll just navigate to the home screen
-    router.replace('/(tabs)');
+  const testAPI = async () => {
+    try {
+      const response = await api.get('/');
+      console.log('API Test Response:', response.data);
+      Alert.alert('Success', 'API is working!');
+    } catch (error) {
+      console.error('API Test Error:', error);
+      Alert.alert('Error', error.message || 'Failed to connect to API');
+    }
+  };
+
+  const handleLogin = async () => {
+    // Validate form inputs
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email');
+      return;
+    }
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+
+    try {
+      console.log('Attempting login with:', { email: email.trim() });
+      const response = await api.post('/auth/signin', {
+        email: email.trim(),
+        password: password.trim()
+      });
+      
+      console.log('Login response:', {
+        status: response.status,
+        data: response.data
+      });
+
+      if (response.data?.user?.token) {
+        // Store the token in AsyncStorage
+        await AsyncStorage.setItem('userToken', response.data.user.token);
+        console.log('Token stored successfully');
+        
+        // Navigate to the main app
+        router.replace('/(tabs)');
+        
+        // Show success message
+        Alert.alert('Success', 'Login successful!');
+      } else {
+        throw new Error('No token received in response');
+      }
+    } catch (error) {
+      console.error('Login error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config,
+        request: error.request
+      });
+      Alert.alert(
+        'Error',
+        error.response?.data?.error || 
+        error.message || 
+        'Login failed. Please check your credentials and try again.'
+      );
+    }
   };
 
   return (
@@ -32,6 +93,12 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity
+          style={[styles.button, styles.testButton]}
+          onPress={testAPI}
+        >
+          <Text style={styles.buttonText}>Test API Connection</Text>
+        </TouchableOpacity>
         {/* Logo and Header */}
         <View style={styles.header}>
           <Text style={styles.logoText}>
@@ -135,6 +202,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  testButton: {
+    backgroundColor: '#4CAF50',
+    marginBottom: 20,
   },
   scrollContent: {
     flexGrow: 1,

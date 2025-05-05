@@ -7,10 +7,12 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView, 
   Platform,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import api from '../../lib/api';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -22,10 +24,67 @@ export default function SignupScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
-  const handleSignup = () => {
-    // In a real app, you would implement actual user registration
-    // For now, we'll just navigate to the login screen
-    router.push('/auth/login');
+  const handleSignup = async () => {
+    if (!fullName.trim()) {
+      Alert.alert('Error', 'Please enter your full name');
+      return;
+    }
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter a password');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    try {
+      console.log('Attempting signup with:', {
+        email: email.trim(),
+        fullName: fullName.trim()
+      });
+      
+      const response = await api.post('/auth/signup', {
+        email: email.trim(),
+        password,
+        fullName: fullName.trim()
+      });
+      
+      console.log('Signup response:', response.data);
+      
+      // Store the ID token
+      await AsyncStorage.setItem('userToken', response.data.token);
+      console.log('Token stored successfully');
+      
+      // Navigate to home screen
+      router.replace('/(tabs)');
+      console.log('Navigating to home screen');
+    } catch (error) {
+      console.error('Signup error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config
+      });
+      
+      const errorMessage = error.response?.data?.error || 
+        error.response?.data?.message || 
+        error.message || 
+        'Signup failed. Please check your credentials and try again.';
+      
+      Alert.alert(
+        'Error',
+        errorMessage
+      );
+    }
   };
 
   return (

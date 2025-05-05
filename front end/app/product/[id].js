@@ -119,13 +119,29 @@ const translations = {
 
 export default function ProductDetailScreen() {
   const router = useRouter();
-  const { product: productParam, language: languageParam } = useLocalSearchParams();
-  const product = JSON.parse(productParam);
-  const [selectedLanguage] = useState(languageParam || 'English');
+  const { id, language } = useLocalSearchParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedLanguage] = useState(language || 'English');
   
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('regular');
   const [showAddedToCart, setShowAddedToCart] = useState(false);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await api.get(`/products/${id}`);
+        setProduct(response.data);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
 
   const getTranslation = (key) => {
     return translations[selectedLanguage]?.[key] || key;
