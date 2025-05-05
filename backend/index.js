@@ -134,11 +134,48 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.get('/api/products/:categoryId', async (req, res) => {
+app.get('/api/products/category/:categoryId', async (req, res) => {
   try {
     const { categoryId } = req.params;
     const products = await productsService.getProductsByCategory(categoryId);
     res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Search products by name
+app.get('/api/products/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    const products = await productsService.searchProducts(query);
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get featured products
+app.get('/api/products/featured', async (req, res) => {
+  try {
+    const featuredProducts = await productsService.getFeaturedProducts();
+    res.json(featuredProducts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Filter products by multiple criteria
+app.post('/api/products/filter', async (req, res) => {
+  try {
+    const { minPrice, maxPrice, rating, inStock, sortBy, sortOrder } = req.body;
+    const filteredProducts = await productsService.filterProducts({
+      minPrice, maxPrice, rating, inStock, sortBy, sortOrder
+    });
+    res.json(filteredProducts);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
