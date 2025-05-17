@@ -27,21 +27,22 @@ import { cn } from '../../utils/cn';
 
 interface SocialMediaPost {
   id: string;
-  content: string;
-  mediaUrls?: string[];
-  platforms: string[];
-  scheduledFor: Date;
-  status: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'FAILED';
-  publishedAt?: Date;
+  platform: string;
   campaign?: string;
-  stats?: {
+  content: string;
+  mediaUrl?: string;
+  status: 'DRAFT' | 'SCHEDULED' | 'PUBLISHED';
+  scheduledDate?: string;
+  scheduledTime?: string;
+  postNow?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  stats: {
     likes: number;
     shares: number;
     comments: number;
-    clicks?: number;
+    clicks: number;
   };
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface SocialMediaManagementProps {
@@ -61,7 +62,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
   onPublishNow,
   onReschedule
 }) => {
-  const { theme } = useTheme();
+  const { isDarkMode } = useTheme();
   const [posts, setPosts] = useState<SocialMediaPost[]>(initialPosts);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -92,7 +93,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
       (post.campaign && post.campaign.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = statusFilter === 'ALL' || post.status === statusFilter;
-    const matchesPlatform = platformFilter === 'ALL' || post.platforms.includes(platformFilter);
+    const matchesPlatform = platformFilter === 'ALL' || post.platform === platformFilter;
     
     return matchesSearch && matchesStatus && matchesPlatform;
   });
@@ -185,22 +186,20 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
         <div
           key={post.id}
           className={`rounded-lg border overflow-hidden ${
-            theme === 'dark' 
+            isDarkMode 
               ? 'bg-gray-800 border-gray-700' 
               : 'bg-white border-gray-200'
           }`}
         >
           <div className={`px-6 py-4 ${
-            theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+            isDarkMode ? 'border-gray-700' : 'border-gray-200'
           }`}>
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center space-x-2 mb-2">
-                  {post.platforms.map((platform, index) => (
-                    <span key={index} className="flex-shrink-0">
-                      {getPlatformIcon(platform)}
-                    </span>
-                  ))}
+                  <span className="flex-shrink-0">
+                    {getPlatformIcon(post.platform)}
+                  </span>
                 </div>
                 <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(post.status)} inline-flex items-center`}>
                   {getStatusIcon(post.status)}
@@ -229,30 +228,30 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
               </div>
             </div>
             <p className={`mt-3 text-sm ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
             }`}>
               {post.content}
             </p>
-            {post.mediaUrls && post.mediaUrls.length > 0 && (
+            {post.mediaUrl && (
               <div className="mt-3 flex -mx-1 overflow-x-auto">
-                {post.mediaUrls.map((url, index) => (
-                  <div key={index} className="px-1 flex-shrink-0">
-                    <div 
-                      className="w-20 h-20 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden"
-                    >
-                      <img src={url} alt={`Media ${index + 1}`} className="object-cover w-full h-full" />
-                    </div>
+                <div className="px-1 flex-shrink-0">
+                  <div 
+                    className="w-20 h-20 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden"
+                  >
+                     <img src={post.mediaUrl} alt="Media" className="object-cover w-full h-full" />
                   </div>
-                ))}
+                </div>
               </div>
             )}
             <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <Calendar className="w-4 h-4 mr-1" />
-                {post.status === 'PUBLISHED' 
-                  ? `Published ${formatDate(new Date(post.publishedAt || post.createdAt))}` 
-                  : `Scheduled for ${formatDate(new Date(post.scheduledFor))}`}
-              </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                    <Clock className="w-3 h-3" />
+                    {post.status === 'PUBLISHED' ? 
+                      formatDate(new Date(post.createdAt)) : 
+                      post.status === 'SCHEDULED' ? 
+                      (post.scheduledDate && post.scheduledTime ? `${post.scheduledDate} ${post.scheduledTime}` : 'Scheduled') : 
+                      'Not scheduled'}
+                  </div>
               {post.status === 'PUBLISHED' && post.stats && (
                 <div className="flex items-center space-x-3 text-sm">
                   <span className="flex items-center">
@@ -273,7 +272,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
           </div>
           {post.status === 'SCHEDULED' && (
             <div className={`px-6 py-3 border-t flex justify-end ${
-              theme === 'dark' ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'
+              isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'
             }`}>
               <button
                 onClick={() => handlePublishNow(post.id)}
@@ -284,7 +283,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
               <button
                 onClick={() => {/* Open reschedule dialog */}}
                 className={`px-3 py-1 text-sm rounded-lg ${
-                  theme === 'dark' 
+                  isDarkMode 
                     ? 'bg-gray-700 text-white hover:bg-gray-600' 
                     : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
@@ -300,7 +299,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
 
   const renderCalendarView = () => (
     <div className={`rounded-lg border overflow-hidden ${
-      theme === 'dark' 
+      isDarkMode 
         ? 'bg-gray-800 border-gray-700' 
         : 'bg-white border-gray-200'
     }`}>
@@ -343,7 +342,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
   );
 
   return (
-    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`p-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h2 className="text-2xl font-bold">Social Media Management</h2>
@@ -370,7 +369,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`pl-10 pr-4 py-2 w-full rounded-lg border ${
-                theme === 'dark' 
+                isDarkMode 
                   ? 'bg-gray-700 border-gray-600 text-white' 
                   : 'bg-white border-gray-300 text-gray-800'
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -382,7 +381,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className={`px-4 py-2 w-full rounded-lg border ${
-              theme === 'dark' 
+              isDarkMode 
                 ? 'bg-gray-700 border-gray-600 text-white' 
                 : 'bg-white border-gray-300 text-gray-800'
             } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -399,7 +398,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
             className={`px-4 py-2 w-full rounded-lg border ${
-              theme === 'dark' 
+              isDarkMode 
                 ? 'bg-gray-700 border-gray-600 text-white' 
                 : 'bg-white border-gray-300 text-gray-800'
             } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -415,14 +414,14 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
 
       <div className="mb-6 flex justify-end">
         <div className={`inline-flex rounded-md border ${
-          theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+          isDarkMode ? 'border-gray-700' : 'border-gray-200'
         }`}>
           <button
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 text-sm rounded-l-md ${
               viewMode === 'list'
                 ? 'bg-blue-600 text-white'
-                : theme === 'dark'
+                : isDarkMode
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
             }`}
@@ -434,7 +433,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
             className={`px-4 py-2 text-sm rounded-r-md ${
               viewMode === 'calendar'
                 ? 'bg-blue-600 text-white'
-                : theme === 'dark'
+                : isDarkMode
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
             }`}
@@ -445,7 +444,7 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
       </div>
 
       {filteredPosts.length === 0 ? (
-        <div className={`p-8 text-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg`}>
+        <div className={`p-8 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg`}>
           <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No posts found</h3>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -454,32 +453,171 @@ const SocialMediaManagement: React.FC<SocialMediaManagementProps> = ({
         </div>
       ) : viewMode === 'list' ? renderListView() : renderCalendarView()}
 
-      {/* Create/Edit Post Modal would go here */}
+      {/* Post Modal */}
       {(isCreateModalOpen || currentPost) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`rounded-lg shadow-lg max-w-3xl w-full mx-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+          <div className={`rounded-lg shadow-lg max-w-3xl w-full mx-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6`}>
             <h3 className="text-lg font-medium mb-4">
-              {currentPost ? 'Edit Post' : 'Create New Post'}
+              {currentPost?.id ? 'Edit Social Media Post' : 'Create Social Media Post'}
             </h3>
-            {/* Post form would go here */}
-            <div className="mt-4 flex justify-end space-x-3">
+            
+            <form className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Platform *
+                </label>
+                <select
+                  value={currentPost?.platform || ''}
+                  onChange={(e) => setCurrentPost(prev => ({ ...prev as SocialMediaPost, platform: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  required
+                >
+                  <option value="">Select a platform</option>
+                  <option value="FACEBOOK">Facebook</option>
+                  <option value="INSTAGRAM">Instagram</option>
+                  <option value="TWITTER">Twitter</option>
+                  <option value="LINKEDIN">LinkedIn</option>
+                  <option value="PINTEREST">Pinterest</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Campaign (Optional)
+                </label>
+                <select
+                  value={currentPost?.campaign || ''}
+                  onChange={(e) => setCurrentPost(prev => ({ ...prev as SocialMediaPost, campaign: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="">Select a campaign</option>
+                  <option value="Summer Sale">Summer Sale</option>
+                  <option value="New Collection">New Collection</option>
+                  <option value="Holiday Special">Holiday Special</option>
+                  <option value="Flash Sale">Flash Sale</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Content *
+                </label>
+                <textarea
+                  value={currentPost?.content || ''}
+                  onChange={(e) => setCurrentPost(prev => ({ ...prev as SocialMediaPost, content: e.target.value }))}
+                  placeholder="Write your post content here..."
+                  rows={4}
+                  required
+                />
+                <div className="mt-3">
+                  <div className="flex justify-between items-center">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {currentPost?.platform === 'twitter' && currentPost.content && (
+                        <span className={`${currentPost.content.length > 280 ? 'text-red-500' : ''}`}>
+                          {currentPost.content.length}/280 characters
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Media URL (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={currentPost?.mediaUrl || ''}
+                  onChange={(e) => setCurrentPost({ ...currentPost, mediaUrl: e.target.value } as SocialMediaPost)}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Schedule For *
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="date"
+                    value={currentPost?.scheduledDate || ''}
+                    onChange={(e) => setCurrentPost({ ...currentPost, scheduledDate: e.target.value } as SocialMediaPost)}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  />
+                  <input
+                    type="time"
+                    value={currentPost?.scheduledTime || ''}
+                    onChange={(e) => setCurrentPost({ ...currentPost, scheduledTime: e.target.value } as SocialMediaPost)}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="postNow"
+                  checked={currentPost?.postNow || false}
+                  onChange={(e) => setCurrentPost({ ...currentPost, postNow: e.target.checked } as SocialMediaPost)}
+                  className={`mr-2 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
+                />
+                <label htmlFor="postNow" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Post immediately instead of scheduling
+                </label>
+              </div>
+            </form>
+
+            <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   setCurrentPost(null);
                 }}
                 className={`px-4 py-2 rounded-lg ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                  isDarkMode
+                    ? 'bg-gray-700 text-white hover:bg-gray-600'
                     : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                onClick={() => {
+                  if (currentPost && currentPost.platform && currentPost.content) {
+                    // Create a partial post object with the required fields
+                    const postData = {
+                      platform: currentPost.platform,
+                      content: currentPost.content,
+                      campaign: currentPost.campaign,
+                      mediaUrl: currentPost.mediaUrl,
+                      status: 'DRAFT' as const,
+                      scheduledDate: currentPost.scheduledDate,
+                      scheduledTime: currentPost.scheduledTime,
+                      postNow: currentPost.postNow
+                    };
+
+                    if (currentPost.id) {
+                      handleUpdatePost(currentPost.id, postData);
+                    } else {
+                      handleCreatePost(postData);
+                    }
+                    setIsCreateModalOpen(false);
+                    setCurrentPost(null);
+                  }
+                }}
+                disabled={!currentPost?.platform || !currentPost?.content || (currentPost?.postNow ? false : (!currentPost?.scheduledDate || !currentPost?.scheduledTime))}
               >
-                {currentPost ? 'Update' : 'Create'}
+                {currentPost?.id ? 'Update Post' : 'Create Post'}
               </button>
             </div>
           </div>

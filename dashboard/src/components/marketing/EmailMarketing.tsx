@@ -532,10 +532,242 @@ const EmailMarketing: React.FC<EmailMarketingProps> = ({
 
       {activeTab === 'templates' ? renderTemplatesTab() : renderCampaignsTab()}
 
-      {/* Template Modal would go here */}
-      {/* Campaign Modal would go here */}
+      {/* Template Modal */}
+      {isTemplateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`rounded-lg shadow-lg max-w-3xl w-full mx-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+            <h3 className="text-lg font-medium mb-4">
+              Create Email Template
+            </h3>
+            
+            <form className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Template Name *
+                </label>
+                <input
+                  type="text"
+                  value={currentTemplate?.name || ''}
+                  onChange={(e) => setCurrentTemplate(prev => ({ ...prev as EmailTemplate, name: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Welcome Email"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Subject Line *
+                </label>
+                <input
+                  type="text"
+                  value={currentTemplate?.subject || ''}
+                  onChange={(e) => setCurrentTemplate(prev => ({ ...prev as EmailTemplate, subject: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Welcome to our store!"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Category
+                </label>
+                <select
+                  value={currentTemplate?.category || ''}
+                  onChange={(e) => setCurrentTemplate(prev => ({ ...prev as EmailTemplate, category: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="">Select a category</option>
+                  <option value="WELCOME">Welcome</option>
+                  <option value="ORDER_CONFIRMATION">Order Confirmation</option>
+                  <option value="MARKETING">Marketing</option>
+                  <option value="NEWSLETTER">Newsletter</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Content *
+                </label>
+                <textarea
+                  value={currentTemplate?.content || ''}
+                  onChange={(e) => setCurrentTemplate(prev => ({ ...prev as EmailTemplate, content: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="<h1>Welcome to our store!</h1><p>Thank you for signing up...</p>"
+                  rows={10}
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isDefault"
+                  checked={currentTemplate?.isDefault || false}
+                  onChange={(e) => setCurrentTemplate(prev => ({ ...prev as EmailTemplate, isDefault: e.target.checked }))}
+                  className={`mr-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
+                />
+                <label htmlFor="isDefault" className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Set as default template for this category
+                </label>
+              </div>
+            </form>
+            
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setIsTemplateModalOpen(false);
+                  setCurrentTemplate(null);
+                }}
+                className={`px-4 py-2 rounded-lg ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (currentTemplate && !currentTemplate.id) {
+                    handleCreateTemplate({
+                      name: currentTemplate.name,
+                      subject: currentTemplate.subject,
+                      content: currentTemplate.content,
+                      category: currentTemplate.category,
+                      isDefault: currentTemplate.isDefault || false
+                    });
+                  } else if (currentTemplate && currentTemplate.id) {
+                    handleUpdateTemplate(currentTemplate.id, currentTemplate);
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={!currentTemplate?.name || !currentTemplate?.subject || !currentTemplate?.content}
+              >
+                {currentTemplate?.id ? 'Update Template' : 'Create Template'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Campaign Modal */}
+      {isCampaignModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`rounded-lg shadow-lg max-w-3xl w-full mx-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+            <h3 className="text-lg font-medium mb-4">
+              Create Email Campaign
+            </h3>
+            
+            <form className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Campaign Name *
+                </label>
+                <input
+                  type="text"
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="May Newsletter"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Email Template *
+                </label>
+                <select
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  required
+                >
+                  <option value="">Select a template</option>
+                  {templates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} - {template.subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Subject Line *
+                </label>
+                <input
+                  type="text"
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="May Newsletter: Special Offers Inside!"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Recipients *
+                </label>
+                <select
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  required
+                >
+                  <option value="ALL">All Customers</option>
+                  <option value="SEGMENT">Customer Segment</option>
+                  <option value="INDIVIDUAL">Selected Individuals</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Schedule For *
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="date"
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  />
+                  <input
+                    type="time"
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="sendNow"
+                  className={`mr-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
+                />
+                <label htmlFor="sendNow" className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Send immediately instead of scheduling
+                </label>
+              </div>
+            </form>
+            
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setIsCampaignModalOpen(false)}
+                className={`px-4 py-2 rounded-lg ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Create Campaign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default EmailMarketing; 
+export default EmailMarketing;

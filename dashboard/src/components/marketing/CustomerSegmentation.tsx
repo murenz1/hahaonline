@@ -28,6 +28,23 @@ interface CustomerSegment {
   customerCount: number;
   createdAt: Date;
   updatedAt: Date;
+  filters?: {
+    purchaseAmount?: {
+      enabled: boolean;
+      min?: number;
+      max?: number;
+    };
+    purchaseFrequency?: {
+      enabled: boolean;
+      min?: number;
+      period?: number;
+    };
+    customerAge?: {
+      enabled: boolean;
+      min?: number;
+      max?: number;
+    };
+  };
 }
 
 interface SegmentCriteria {
@@ -54,7 +71,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
   onUpdateSegment,
   onDeleteSegment
 }) => {
-  const { theme } = useTheme();
+  const { isDarkMode } = useTheme();
   const [segments, setSegments] = useState<CustomerSegment[]>(initialSegments);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -169,7 +186,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
   };
 
   return (
-    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`p-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h2 className="text-2xl font-bold">Customer Segmentation</h2>
@@ -195,7 +212,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`pl-10 pr-4 py-2 w-full md:w-1/3 rounded-lg border ${
-              theme === 'dark' 
+              isDarkMode 
                 ? 'bg-gray-700 border-gray-600 text-white' 
                 : 'bg-white border-gray-300 text-gray-800'
             } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -204,7 +221,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
       </div>
 
       {filteredSegments.length === 0 ? (
-        <div className={`p-8 text-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg`}>
+        <div className={`p-8 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg`}>
           <AlertTriangle className="mx-auto h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No segments found</h3>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -217,7 +234,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
             <div
               key={segment.id}
               className={`rounded-lg border overflow-hidden ${
-                theme === 'dark' 
+                isDarkMode 
                   ? 'bg-gray-800 border-gray-700' 
                   : 'bg-white border-gray-200'
               }`}
@@ -225,7 +242,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
               <div 
                 className={`px-6 py-4 flex items-center cursor-pointer ${
                   expandedSegmentId === segment.id 
-                    ? theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50' 
+                    ? isDarkMode ? 'bg-gray-700' : 'bg-gray-50' 
                     : ''
                 }`}
                 onClick={() => setExpandedSegmentId(
@@ -238,14 +255,14 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
                 <div className="flex-grow">
                   <h3 className="text-lg font-medium">{segment.name}</h3>
                   <p className={`text-sm ${
-                    theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
                   }`}>
                     {segment.customerCount.toLocaleString()} customers
                   </p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className={`text-sm ${
-                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
                   }`}>
                     Updated {formatDate(new Date(segment.updatedAt))}
                   </span>
@@ -278,13 +295,13 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
               
               {expandedSegmentId === segment.id && (
                 <div className={`px-6 py-4 border-t ${
-                  theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
                 }`}>
                   {segment.description && (
                     <div className="mb-4">
                       <h4 className="text-sm font-medium mb-1">Description:</h4>
                       <p className={`text-sm ${
-                        theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
                       }`}>
                         {segment.description}
                       </p>
@@ -294,7 +311,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
                   <div className="mb-4">
                     <h4 className="text-sm font-medium mb-1">Segment Criteria:</h4>
                     <div className={`p-3 rounded-lg text-sm ${
-                      theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-700'
+                      isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-700'
                     }`}>
                       <div className="flex items-start">
                         <Filter className="w-4 h-4 mr-2 mt-0.5" />
@@ -306,7 +323,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
                   <div className="flex space-x-3">
                     <button
                       className={`flex items-center px-3 py-2 text-sm rounded-lg ${
-                        theme === 'dark' 
+                        isDarkMode 
                           ? 'bg-gray-700 text-white hover:bg-gray-600' 
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                       }`}
@@ -316,7 +333,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
                     </button>
                     <button
                       className={`flex items-center px-3 py-2 text-sm rounded-lg ${
-                        theme === 'dark' 
+                        isDarkMode 
                           ? 'bg-gray-700 text-white hover:bg-gray-600' 
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                       }`}
@@ -326,7 +343,7 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
                     </button>
                     <button
                       className={`flex items-center px-3 py-2 text-sm rounded-lg ${
-                        theme === 'dark' 
+                        isDarkMode 
                           ? 'bg-gray-700 text-white hover:bg-gray-600' 
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                       }`}
@@ -342,32 +359,346 @@ const CustomerSegmentation: React.FC<CustomerSegmentationProps> = ({
         </div>
       )}
 
-      {/* Create/Edit Segment Modal would go here */}
+      {/* Segment Modal */}
       {(isCreateModalOpen || currentSegment) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`rounded-lg shadow-lg max-w-3xl w-full mx-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
+          <div className={`rounded-lg shadow-lg max-w-3xl w-full mx-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6`}>
             <h3 className="text-lg font-medium mb-4">
-              {currentSegment ? 'Edit Segment' : 'Create New Segment'}
+              {currentSegment?.id ? 'Edit Customer Segment' : 'Create Customer Segment'}
             </h3>
-            {/* Segment form would go here */}
-            <div className="mt-4 flex justify-end space-x-3">
+            
+            <form className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Segment Name *
+                </label>
+                <input
+                  type="text"
+                  value={currentSegment?.name || ''}
+                  onChange={(e) => setCurrentSegment(prev => ({ ...prev as CustomerSegment, name: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="High-Value Customers"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Description
+                </label>
+                <textarea
+                  value={currentSegment?.description || ''}
+                  onChange={(e) => setCurrentSegment(prev => ({ ...prev as CustomerSegment, description: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Customers who have spent over $500 in the last 3 months"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Filter Criteria
+                </h4>
+                
+                <div className="space-y-3">
+                  {/* Purchase Amount Filter */}
+                  <div className="p-3 border rounded-lg border-gray-300 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Purchase Amount
+                      </label>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="enablePurchaseAmount"
+                          checked={currentSegment?.filters?.purchaseAmount?.enabled || false}
+                          onChange={(e) => {
+                            if (currentSegment) {
+                              const updatedSegment = { ...currentSegment };
+                              if (!updatedSegment.filters) {
+                                updatedSegment.filters = {};
+                              }
+                              if (!updatedSegment.filters.purchaseAmount) {
+                                updatedSegment.filters.purchaseAmount = { enabled: e.target.checked };
+                              } else {
+                                updatedSegment.filters.purchaseAmount.enabled = e.target.checked;
+                              }
+                              setCurrentSegment(updatedSegment);
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        <label htmlFor="enablePurchaseAmount" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Enable
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {currentSegment?.filters?.purchaseAmount?.enabled && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Minimum ($)
+                          </label>
+                          <input
+                            type="number"
+                            value={currentSegment?.filters?.purchaseAmount?.min || ''}
+                            onChange={(e) => {
+                              if (currentSegment) {
+                                const updatedSegment = { ...currentSegment };
+                                if (!updatedSegment.filters) {
+                                  updatedSegment.filters = {};
+                                }
+                                if (!updatedSegment.filters.purchaseAmount) {
+                                  updatedSegment.filters.purchaseAmount = { enabled: true };
+                                }
+                                updatedSegment.filters.purchaseAmount.min = e.target.value ? Number(e.target.value) : undefined;
+                                setCurrentSegment(updatedSegment);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            placeholder="100"
+                          />
+                        </div>
+                        <div>
+                          <label className={`block text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Maximum ($)
+                          </label>
+                          <input
+                            type="number"
+                            value={currentSegment?.filters?.purchaseAmount?.max || ''}
+                            onChange={(e) => {
+                              if (currentSegment) {
+                                const updatedSegment = { ...currentSegment };
+                                if (!updatedSegment.filters) {
+                                  updatedSegment.filters = {};
+                                }
+                                if (!updatedSegment.filters.purchaseAmount) {
+                                  updatedSegment.filters.purchaseAmount = { enabled: true };
+                                }
+                                updatedSegment.filters.purchaseAmount.max = e.target.value ? Number(e.target.value) : undefined;
+                                setCurrentSegment(updatedSegment);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            placeholder="1000"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Purchase Frequency Filter */}
+                  <div className="p-3 border rounded-lg border-gray-300 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Purchase Frequency
+                      </label>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="enablePurchaseFrequency"
+                          checked={currentSegment?.filters?.purchaseFrequency?.enabled || false}
+                          onChange={(e) => {
+                            if (currentSegment) {
+                              const updatedSegment = { ...currentSegment };
+                              if (!updatedSegment.filters) {
+                                updatedSegment.filters = {};
+                              }
+                              if (!updatedSegment.filters.purchaseFrequency) {
+                                updatedSegment.filters.purchaseFrequency = { enabled: e.target.checked };
+                              } else {
+                                updatedSegment.filters.purchaseFrequency.enabled = e.target.checked;
+                              }
+                              setCurrentSegment(updatedSegment);
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        <label htmlFor="enablePurchaseFrequency" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Enable
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {currentSegment?.filters?.purchaseFrequency?.enabled && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Minimum (orders)
+                          </label>
+                          <input
+                            type="number"
+                            value={currentSegment?.filters?.purchaseFrequency?.min || ''}
+                            onChange={(e) => {
+                              if (currentSegment) {
+                                const updatedSegment = { ...currentSegment };
+                                if (!updatedSegment.filters) {
+                                  updatedSegment.filters = {};
+                                }
+                                if (!updatedSegment.filters.purchaseFrequency) {
+                                  updatedSegment.filters.purchaseFrequency = { enabled: true };
+                                }
+                                updatedSegment.filters.purchaseFrequency.min = e.target.value ? Number(e.target.value) : undefined;
+                                setCurrentSegment(updatedSegment);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            placeholder="2"
+                          />
+                        </div>
+                        <div>
+                          <label className={`block text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Time Period (days)
+                          </label>
+                          <input
+                            type="number"
+                            value={currentSegment?.filters?.purchaseFrequency?.period || ''}
+                            onChange={(e) => {
+                              if (currentSegment) {
+                                const updatedSegment = { ...currentSegment };
+                                if (!updatedSegment.filters) {
+                                  updatedSegment.filters = {};
+                                }
+                                if (!updatedSegment.filters.purchaseFrequency) {
+                                  updatedSegment.filters.purchaseFrequency = { enabled: true };
+                                }
+                                updatedSegment.filters.purchaseFrequency.period = e.target.value ? Number(e.target.value) : undefined;
+                                setCurrentSegment(updatedSegment);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            placeholder="90"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Customer Age Filter */}
+                  <div className="p-3 border rounded-lg border-gray-300 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Customer Age
+                      </label>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="enableCustomerAge"
+                          checked={currentSegment?.filters?.customerAge?.enabled || false}
+                          onChange={(e) => {
+                            if (currentSegment) {
+                              const updatedSegment = { ...currentSegment };
+                              if (!updatedSegment.filters) {
+                                updatedSegment.filters = {};
+                              }
+                              if (!updatedSegment.filters.customerAge) {
+                                updatedSegment.filters.customerAge = { enabled: e.target.checked };
+                              } else {
+                                updatedSegment.filters.customerAge.enabled = e.target.checked;
+                              }
+                              setCurrentSegment(updatedSegment);
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        <label htmlFor="enableCustomerAge" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Enable
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {currentSegment?.filters?.customerAge?.enabled && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Minimum (years)
+                          </label>
+                          <input
+                            type="number"
+                            value={currentSegment?.filters?.customerAge?.min || ''}
+                            onChange={(e) => {
+                              if (currentSegment) {
+                                const updatedSegment = { ...currentSegment };
+                                if (!updatedSegment.filters) {
+                                  updatedSegment.filters = {};
+                                }
+                                if (!updatedSegment.filters.customerAge) {
+                                  updatedSegment.filters.customerAge = { enabled: true };
+                                }
+                                updatedSegment.filters.customerAge.min = e.target.value ? Number(e.target.value) : undefined;
+                                setCurrentSegment(updatedSegment);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            placeholder="18"
+                          />
+                        </div>
+                        <div>
+                          <label className={`block text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Maximum (years)
+                          </label>
+                          <input
+                            type="number"
+                            value={currentSegment?.filters?.customerAge?.max || ''}
+                            onChange={(e) => {
+                              if (currentSegment) {
+                                const updatedSegment = { ...currentSegment };
+                                if (!updatedSegment.filters) {
+                                  updatedSegment.filters = {};
+                                }
+                                if (!updatedSegment.filters.customerAge) {
+                                  updatedSegment.filters.customerAge = { enabled: true };
+                                }
+                                updatedSegment.filters.customerAge.max = e.target.value ? Number(e.target.value) : undefined;
+                                setCurrentSegment(updatedSegment);
+                              }
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            placeholder="35"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </form>
+            
+            <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   setCurrentSegment(null);
                 }}
-                className={`px-4 py-2 rounded-lg ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                }`}
+                className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
               >
                 Cancel
               </button>
               <button
+                onClick={() => {
+                  if (currentSegment && currentSegment.name) {
+                    if (!currentSegment.id) {
+                      // Create a valid segment object with required fields
+                      const newSegment: Omit<CustomerSegment, 'id' | 'createdAt' | 'updatedAt'> = {
+                        name: currentSegment.name,
+                        description: currentSegment.description,
+                        criteria: currentSegment.criteria || { type: 'AND', conditions: [] },
+                        customerCount: currentSegment.customerCount || 0,
+                        filters: currentSegment.filters
+                      };
+                      handleCreateSegment(newSegment);
+                    } else {
+                      handleUpdateSegment(currentSegment.id, currentSegment);
+                    }
+                    setIsCreateModalOpen(false);
+                    setCurrentSegment(null);
+                  }
+                }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={!currentSegment?.name}
               >
-                {currentSegment ? 'Update' : 'Create'}
+                {currentSegment?.id ? 'Update Segment' : 'Create Segment'}
               </button>
             </div>
           </div>

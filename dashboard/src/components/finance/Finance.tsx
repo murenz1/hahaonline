@@ -322,6 +322,7 @@ const Finance: React.FC = () => {
           transactions={filteredTransactions}
           onEdit={handleEditTransaction}
           onDelete={handleDeleteTransaction}
+          onViewDetails={handleViewDetails}
         />
       </div>
 

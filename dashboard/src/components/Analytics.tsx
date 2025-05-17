@@ -288,10 +288,29 @@ const Analytics: React.FC<AnalyticsProps> = () => {
               </button>
             </div>
           </div>
-          <div className="h-64 flex items-center justify-center">
-            <p className={cn("text-sm", isDarkMode ? "text-gray-400" : "text-gray-500")}>
-              Chart visualization would go here
-            </p>
+          <div className="h-64">
+            <div className="w-full h-full">
+              {/* This would use recharts in a real implementation */}
+              <div className="w-full h-full flex flex-col">
+                <div className="flex-1 flex">
+                  {revenueData.labels.map((label, i) => (
+                    <div key={i} className="flex-1 flex flex-col justify-end relative">
+                      <div 
+                        className="bg-blue-500 dark:bg-blue-600 rounded-t-sm mx-1" 
+                        style={{ height: `${(revenueData.values[i] / Math.max(...revenueData.values)) * 100}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="h-6 flex mt-2">
+                  {revenueData.labels.map((label, i) => (
+                    <div key={i} className="flex-1 text-center">
+                      <span className={cn("text-xs", isDarkMode ? "text-gray-400" : "text-gray-500")}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -327,10 +346,29 @@ const Analytics: React.FC<AnalyticsProps> = () => {
               </button>
             </div>
           </div>
-          <div className="h-64 flex items-center justify-center">
-            <p className={cn("text-sm", isDarkMode ? "text-gray-400" : "text-gray-500")}>
-              Chart visualization would go here
-            </p>
+          <div className="h-64">
+            <div className="w-full h-full">
+              {/* This would use recharts in a real implementation */}
+              <div className="w-full h-full flex flex-col">
+                <div className="flex-1 flex">
+                  {ordersData.labels.map((label, i) => (
+                    <div key={i} className="flex-1 flex flex-col justify-end relative">
+                      <div 
+                        className="bg-orange-500 dark:bg-orange-600 rounded-t-sm mx-1" 
+                        style={{ height: `${(ordersData.values[i] / Math.max(...ordersData.values)) * 100}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="h-6 flex mt-2">
+                  {ordersData.labels.map((label, i) => (
+                    <div key={i} className="flex-1 text-center">
+                      <span className={cn("text-xs", isDarkMode ? "text-gray-400" : "text-gray-500")}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -311,15 +311,202 @@ const PromotionManagement: React.FC<PromotionManagementProps> = ({
         </div>
       )}
 
-      {/* Add/Edit Modal would go here */}
+      {/* Add/Edit Modal */}
       {(isAddModalOpen || currentPromotion) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={`rounded-lg shadow-lg max-w-2xl w-full mx-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} p-6`}>
             <h3 className="text-lg font-medium mb-4">
               {currentPromotion ? 'Edit Promotion' : 'Add New Promotion'}
             </h3>
-            {/* Form would go here */}
-            <div className="mt-4 flex justify-end space-x-3">
+            
+            <form className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Promotion Name *
+                </label>
+                <input
+                  type="text"
+                  value={currentPromotion?.name || ''}
+                  onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, name: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Summer Sale 2023"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Promotion Code *
+                </label>
+                <input
+                  type="text"
+                  value={currentPromotion?.code || ''}
+                  onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, code: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="SUMMER23"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Description
+                </label>
+                <textarea
+                  value={currentPromotion?.description || ''}
+                  onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, description: e.target.value }))}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Summer season discount for all products"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Promotion Type *
+                  </label>
+                  <select
+                    value={currentPromotion?.type || 'PERCENTAGE'}
+                    onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, type: e.target.value as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  >
+                    <option value="PERCENTAGE">Percentage Discount</option>
+                    <option value="FIXED_AMOUNT">Fixed Amount</option>
+                    <option value="FREE_SHIPPING">Free Shipping</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Value *
+                  </label>
+                  <div className="relative">
+                    {currentPromotion?.type === 'PERCENTAGE' && (
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>%</span>
+                      </div>
+                    )}
+                    {currentPromotion?.type === 'FIXED_AMOUNT' && (
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>$</span>
+                      </div>
+                    )}
+                    <input
+                      type="number"
+                      value={currentPromotion?.value || 0}
+                      onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, value: parseFloat(e.target.value) }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${currentPromotion?.type === 'FIXED_AMOUNT' ? 'pl-7' : ''} ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      placeholder="10"
+                      disabled={currentPromotion?.type === 'FREE_SHIPPING'}
+                      required={currentPromotion?.type !== 'FREE_SHIPPING'}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={currentPromotion?.startDate ? new Date(currentPromotion.startDate).toISOString().split('T')[0] : ''}
+                    onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, startDate: new Date(e.target.value) }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={currentPromotion?.endDate ? new Date(currentPromotion.endDate).toISOString().split('T')[0] : ''}
+                    onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, endDate: e.target.value ? new Date(e.target.value) : undefined }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    min={currentPromotion?.startDate ? new Date(currentPromotion.startDate).toISOString().split('T')[0] : ''}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Minimum Purchase
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>$</span>
+                    </div>
+                    <input
+                      type="number"
+                      value={currentPromotion?.minPurchase || ''}
+                      onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, minPurchase: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                      className={`w-full pl-7 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      placeholder="50"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Maximum Discount
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>$</span>
+                    </div>
+                    <input
+                      type="number"
+                      value={currentPromotion?.maxDiscount || ''}
+                      onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, maxDiscount: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                      className={`w-full pl-7 px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      placeholder="100"
+                      disabled={currentPromotion?.type !== 'PERCENTAGE'}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Usage Limit
+                  </label>
+                  <input
+                    type="number"
+                    value={currentPromotion?.usageLimit || ''}
+                    onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, usageLimit: e.target.value ? parseInt(e.target.value) : undefined }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    placeholder="100"
+                    min="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Status *
+                  </label>
+                  <select
+                    value={currentPromotion?.status || 'ACTIVE'}
+                    onChange={(e) => setCurrentPromotion(prev => ({ ...prev as Promotion, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'EXPIRED' }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    required
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="EXPIRED">Expired</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+            
+            <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => {
                   setIsAddModalOpen(false);
@@ -334,9 +521,17 @@ const PromotionManagement: React.FC<PromotionManagementProps> = ({
                 Cancel
               </button>
               <button
+                onClick={() => {
+                  if (currentPromotion?.id) {
+                    handleEditPromotion(currentPromotion.id, currentPromotion);
+                  } else if (currentPromotion) {
+                    handleAddPromotion(currentPromotion as Omit<Promotion, 'id'>);
+                  }
+                }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={!currentPromotion?.name || !currentPromotion?.code}
               >
-                {currentPromotion ? 'Update' : 'Create'}
+                {currentPromotion?.id ? 'Update' : 'Create'}
               </button>
             </div>
           </div>
@@ -346,4 +541,4 @@ const PromotionManagement: React.FC<PromotionManagementProps> = ({
   );
 };
 
-export default PromotionManagement; 
+export default PromotionManagement;

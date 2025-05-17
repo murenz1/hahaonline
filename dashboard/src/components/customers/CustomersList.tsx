@@ -1,5 +1,5 @@
-import React from 'react';
-import { useTheme } from '../../hooks/useTheme';
+import React, { useState } from 'react';
+import { useTheme } from '../../context/ThemeContext';
 import { cn } from '../../utils/cn';
 import { useGetCustomersQuery } from '../../store/api';
 import { Customer } from '../../store/slices/customersSlice';
@@ -29,54 +29,225 @@ import {
   SortDesc,
   Tag,
   User,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Phone,
 } from 'lucide-react';
 
-const statusColors = {
-  active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-  blocked: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+type CustomerStatus = 'active' | 'inactive' | 'blocked';
+
+const statusColors: Record<CustomerStatus, string> = {
+  active: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+  inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300',
+  blocked: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
 };
 
-export const CustomersList: React.FC = () => {
-  const { theme } = useTheme();
-  const [page, setPage] = React.useState(1);
-  const [limit, setLimit] = React.useState(10);
-  const [search, setSearch] = React.useState('');
-  const [status, setStatus] = React.useState<string[]>([]);
-  const [tags, setTags] = React.useState<string[]>([]);
-  const [dateRange, setDateRange] = React.useState<{ start: Date | null; end: Date | null }>({
+// Mock data for customers
+const mockCustomers: Customer[] = [
+  {
+    id: 'CUST-001',
+    email: 'john.doe@example.com',
+    firstName: 'John',
+    lastName: 'Doe',
+    phone: '+1 (555) 123-4567',
+    status: 'active' as CustomerStatus,
+    addresses: [
+      {
+        street: '123 Main St',
+        city: 'New York',
+        state: 'NY',
+        country: 'USA',
+        zipCode: '10001'
+      }
+    ],
+    totalOrders: 25,
+    totalSpent: 2499.99,
+    lastOrderDate: '2024-03-10T00:00:00Z',
+    notes: 'Loyal customer',
+    createdAt: '2023-01-15T00:00:00Z',
+    updatedAt: '2024-03-10T00:00:00Z',
+    marketingPreferences: {
+      email: true,
+      sms: true,
+      phone: false
+    },
+    tags: ['vip', 'loyal']
+  },
+  {
+    id: 'CUST-002',
+    email: 'jane.smith@example.com',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    phone: '+1 (555) 234-5678',
+    status: 'active' as CustomerStatus,
+    addresses: [
+      {
+        street: '456 Oak Ave',
+        city: 'Los Angeles',
+        state: 'CA',
+        country: 'USA',
+        zipCode: '90001'
+      }
+    ],
+    totalOrders: 3,
+    totalSpent: 299.99,
+    lastOrderDate: '2024-03-15T00:00:00Z',
+    notes: 'New customer',
+    createdAt: '2024-02-20T00:00:00Z',
+    updatedAt: '2024-03-15T00:00:00Z',
+    marketingPreferences: {
+      email: true,
+      sms: false,
+      phone: false
+    },
+    tags: ['new']
+  },
+  {
+    id: 'CUST-003',
+    email: 'robert.j@example.com',
+    firstName: 'Robert',
+    lastName: 'Johnson',
+    phone: '+1 (555) 345-6789',
+    status: 'inactive' as CustomerStatus,
+    addresses: [
+      {
+        street: '789 Pine St',
+        city: 'Chicago',
+        state: 'IL',
+        country: 'USA',
+        zipCode: '60007'
+      }
+    ],
+    totalOrders: 0,
+    totalSpent: 0,
+    lastOrderDate: null,
+    notes: 'Inactive account',
+    createdAt: '2023-06-10T00:00:00Z',
+    updatedAt: '2023-06-10T00:00:00Z',
+    marketingPreferences: {
+      email: false,
+      sms: false,
+      phone: false
+    },
+    tags: ['inactive']
+  }
+];
+
+interface CustomersListProps {
+  onViewCustomer: (customerId: string) => void;
+  onEditCustomer: (customerId: string) => void;
+  onDeleteCustomer: (customerId: string) => void;
+}
+
+export const CustomersList: React.FC<CustomersListProps> = ({
+  onViewCustomer,
+  onEditCustomer,
+  onDeleteCustomer
+}) => {
+  const { isDarkMode } = useTheme();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
     start: null,
     end: null,
   });
-  const [sort, setSort] = React.useState<{ field: string; direction: 'asc' | 'desc' }>({
-    field: 'createdAt',
-    direction: 'desc',
-  });
+  const [sortField, setSortField] = useState<string>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const { data, isLoading, error } = useGetCustomersQuery({
-    page,
-    limit,
-    search,
-    status: status.join(','),
-    tags: tags.join(','),
-    startDate: dateRange.start?.toISOString(),
-    endDate: dateRange.end?.toISOString(),
-    sortBy: sort.field,
-    sortDirection: sort.direction,
-  });
+  // In a real application, we would use the API query
+  // const { data, isLoading, error } = useGetCustomersQuery({
+  //   page,
+  //   limit,
+  //   search,
+  //   status: selectedStatus,
+  //   tags: selectedTags.join(','),
+  //   startDate: dateRange.start ? dateRange.start.toISOString() : undefined,
+  //   endDate: dateRange.end ? dateRange.end.toISOString() : undefined,
+  //   sortField,
+  //   sortDirection,
+  // });
 
-  const handleSort = (field: string) => {
-    setSort(prev => ({
-      field,
-      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
+  // For now, use mock data
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Filter and sort the mock data
+  const filteredCustomers = mockCustomers.filter(customer => {
+    // Filter by search term
+    const searchLower = search.toLowerCase();
+    const matchesSearch = search === '' || 
+      customer.firstName.toLowerCase().includes(searchLower) ||
+      customer.lastName.toLowerCase().includes(searchLower) ||
+      customer.email.toLowerCase().includes(searchLower) ||
+      customer.phone.toLowerCase().includes(searchLower);
+    
+    // Filter by status
+    const matchesStatus = selectedStatus === 'all' || customer.status === selectedStatus;
+    
+    // Filter by tags
+    const matchesTags = selectedTags.length === 0 || 
+      selectedTags.some(tag => customer.tags.includes(tag));
+    
+    // Filter by date range
+    const createdDate = new Date(customer.createdAt);
+    const matchesDateRange = 
+      (!dateRange.start || createdDate >= dateRange.start) &&
+      (!dateRange.end || createdDate <= dateRange.end);
+    
+    return matchesSearch && matchesStatus && matchesTags && matchesDateRange;
+  }).sort((a, b) => {
+    // Sort by selected field
+    let aValue: any = a[sortField as keyof Customer];
+    let bValue: any = b[sortField as keyof Customer];
+    
+    // Handle nested fields or special cases
+    if (sortField === 'name') {
+      aValue = `${a.firstName} ${a.lastName}`;
+      bValue = `${b.firstName} ${b.lastName}`;
+    }
+    
+    // Handle date fields
+    if (typeof aValue === 'string' && (aValue.includes('T') || aValue.includes('-'))) {
+      aValue = new Date(aValue).getTime();
+      bValue = new Date(bValue).getTime();
+    }
+    
+    // Compare values
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  // Paginate the results
+  const paginatedCustomers = filteredCustomers.slice((page - 1) * limit, page * limit);
+  const totalPages = Math.ceil(filteredCustomers.length / limit);
 
   const handleStatusChange = (value: string) => {
-    setStatus(prev => prev.includes(value)
-      ? prev.filter(s => s !== value)
-      : [...prev, value]
-    );
+    setSelectedStatus(value);
+  };
+  
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => {
+      if (prev.includes(tag)) {
+        return prev.filter(t => t !== tag);
+      } else {
+        return [...prev, tag];
+      }
+    });
+  };
+  
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
   };
 
   if (isLoading) {
@@ -98,8 +269,8 @@ export const CustomersList: React.FC = () => {
   return (
     <div className={cn(
       "rounded-lg transition-colors duration-200",
-      theme === 'dark'
-        ? 'bg-[#161926] border border-[#1F2436]'
+      isDarkMode
+        ? 'bg-gray-800 border border-gray-700'
         : 'bg-white border border-gray-200'
     )}>
       {/* Filters */}
@@ -116,9 +287,10 @@ export const CustomersList: React.FC = () => {
           <div className="flex items-center gap-2">
             <Select
               placeholder="Status"
-              value={status}
+              value={selectedStatus}
               onChange={handleStatusChange}
               options={[
+                { label: 'All', value: 'all' },
                 { label: 'Active', value: 'active' },
                 { label: 'Inactive', value: 'inactive' },
                 { label: 'Blocked', value: 'blocked' },
@@ -130,8 +302,9 @@ export const CustomersList: React.FC = () => {
               endDate={dateRange.end}
               onChange={setDateRange}
             />
-            <Button variant="outline" size="icon">
-              <Download className="h-4 w-4" />
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
             </Button>
           </div>
         </div>
@@ -144,13 +317,12 @@ export const CustomersList: React.FC = () => {
             <TableHead>
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={() => handleSort('lastName')}
                 className="font-semibold"
               >
                 Customer
-                {sort.field === 'lastName' && (
-                  sort.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-1" /> : <SortDesc className="h-4 w-4 ml-1" />
+                {sortField === 'lastName' && (
+                  sortDirection === 'asc' ? <SortAsc className="h-4 w-4 ml-1 inline" /> : <SortDesc className="h-4 w-4 ml-1 inline" />
                 )}
               </Button>
             </TableHead>
@@ -158,26 +330,24 @@ export const CustomersList: React.FC = () => {
             <TableHead>
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={() => handleSort('totalOrders')}
                 className="font-semibold"
               >
                 Orders
-                {sort.field === 'totalOrders' && (
-                  sort.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-1" /> : <SortDesc className="h-4 w-4 ml-1" />
+                {sortField === 'totalOrders' && (
+                  sortDirection === 'asc' ? <SortAsc className="h-4 w-4 ml-1 inline" /> : <SortDesc className="h-4 w-4 ml-1 inline" />
                 )}
               </Button>
             </TableHead>
             <TableHead>
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={() => handleSort('totalSpent')}
                 className="font-semibold"
               >
                 Total Spent
-                {sort.field === 'totalSpent' && (
-                  sort.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-1" /> : <SortDesc className="h-4 w-4 ml-1" />
+                {sortField === 'totalSpent' && (
+                  sortDirection === 'asc' ? <SortAsc className="h-4 w-4 ml-1 inline" /> : <SortDesc className="h-4 w-4 ml-1 inline" />
                 )}
               </Button>
             </TableHead>
@@ -187,29 +357,29 @@ export const CustomersList: React.FC = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data?.customers.map((customer: Customer) => (
+          {paginatedCustomers.map((customer) => (
             <TableRow key={customer.id}>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center",
-                    theme === 'dark' ? 'bg-[#1F2436]' : 'bg-gray-100'
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                   )}>
                     <User className={cn(
                       "w-4 h-4",
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
                     )} />
                   </div>
                   <div>
                     <div className={cn(
                       "font-medium",
-                      theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+                      isDarkMode ? 'text-gray-100' : 'text-gray-900'
                     )}>
                       {customer.firstName} {customer.lastName}
                     </div>
                     <div className={cn(
                       "text-sm",
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
                     )}>
                       {customer.phone}
                     </div>
@@ -220,18 +390,15 @@ export const CustomersList: React.FC = () => {
               <TableCell>{customer.totalOrders}</TableCell>
               <TableCell>${customer.totalSpent.toFixed(2)}</TableCell>
               <TableCell>
-                <span className={cn(
-                  "px-2 py-1 rounded-full text-xs font-medium",
-                  statusColors[customer.status]
-                )}>
+                <Badge variant={customer.status === 'active' ? 'success' : 
+                              customer.status === 'inactive' ? 'secondary' : 'danger'}>
                   {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
-                </span>
+                </Badge>
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
                   {customer.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      <Tag className="w-3 h-3 mr-1" />
+                    <Badge key={tag} variant="primary">
                       {tag}
                     </Badge>
                   ))}
@@ -239,11 +406,27 @@ export const CustomersList: React.FC = () => {
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onViewCustomer(customer.id)}
+                  >
                     View
                   </Button>
-                  <Button variant="outline" size="icon">
-                    <Mail className="h-4 w-4" />
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEditCustomer(customer.id)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    onClick={() => onDeleteCustomer(customer.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </TableCell>
@@ -268,47 +451,43 @@ export const CustomersList: React.FC = () => {
             />
             <span className={cn(
               "text-sm",
-              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
             )}>
-              Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, data?.total || 0)} of {data?.total || 0} results
+              Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, filteredCustomers.length)} of {filteredCustomers.length} results
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="icon"
-              disabled={page === 1}
               onClick={() => setPage(1)}
+              disabled={page === 1}
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
-              size="icon"
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
               disabled={page === 1}
-              onClick={() => setPage(prev => prev - 1)}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className={cn(
-              "text-sm font-medium",
-              theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+              "text-sm px-2",
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
             )}>
-              Page {page} of {Math.ceil((data?.total || 0) / limit)}
+              Page {page} of {totalPages}
             </span>
             <Button
               variant="outline"
-              size="icon"
-              disabled={page === Math.ceil((data?.total || 0) / limit)}
-              onClick={() => setPage(prev => prev + 1)}
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
-              size="icon"
-              disabled={page === Math.ceil((data?.total || 0) / limit)}
-              onClick={() => setPage(Math.ceil((data?.total || 0) / limit))}
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages}
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
@@ -317,4 +496,4 @@ export const CustomersList: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};
