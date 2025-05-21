@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '../../lib/storage';
 import api from '../../lib/api';
 
 export default function SignupScreen() {
   const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +33,10 @@ export default function SignupScreen() {
     }
     if (!email.trim()) {
       Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      Alert.alert('Error', 'Please enter your phone number');
       return;
     }
     if (!password.trim()) {
@@ -49,24 +55,54 @@ export default function SignupScreen() {
     try {
       console.log('Attempting signup with:', {
         email: email.trim(),
-        fullName: fullName.trim()
+        fullName: fullName.trim(),
+        phoneNumber: phoneNumber.trim()
       });
       
       const response = await api.post('/auth/signup', {
         email: email.trim(),
         password,
-        fullName: fullName.trim()
+        fullName: fullName.trim(),
+        phoneNumber: phoneNumber.trim()
       });
       
       console.log('Signup response:', response.data);
       
-      // Store the ID token
-      await AsyncStorage.setItem('userToken', response.data.token);
-      console.log('Token stored successfully');
-      
-      // Navigate to home screen
-      router.replace('/(tabs)');
-      console.log('Navigating to home screen');
+      // Check for user data in response
+      if (response.data?.user) {
+        console.log('User data received:', response.data.user);
+        
+        try {
+          // Store the token if available
+          if (response.data.user.token) {
+            await AsyncStorage.setItem('userToken', response.data.user.token);
+            console.log('Token stored successfully');
+          } else if (response.data.user.uid || response.data.user.id) {
+            // If no token but we have user ID, store that instead
+            await AsyncStorage.setItem('userId', response.data.user.uid || response.data.user.id);
+            console.log('User ID stored instead of token');
+          }
+          
+          // Navigate immediately to ensure redirection happens
+          console.log('Navigating to home screen');
+          router.replace('/(tabs)');
+          
+          // Show success alert after navigation has been triggered
+          setTimeout(() => {
+            Alert.alert(
+              'Success', 
+              'Account created successfully!'
+            );
+          }, 100);
+        } catch (storageError) {
+          console.error('Error storing authentication data:', storageError);
+          // Even if storage fails, try to navigate anyway
+          router.replace('/(tabs)');
+        }
+      } else {
+        console.error('Invalid response format:', response.data);
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
       console.error('Signup error details:', {
         message: error.message,
@@ -126,6 +162,18 @@ export default function SignupScreen() {
               autoCapitalize="none"
               value={email}
               onChangeText={setEmail}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="call-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone Number"
+              placeholderTextColor="#8E8E93"
+              keyboardType="phone-pad"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
             />
           </View>
 

@@ -2,12 +2,14 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useFonts } from 'expo-font';
+import { SplashScreen } from 'expo-router';
 
 function TabBarIcon({ name, color }) {
   return <Ionicons name={name} size={24} color={color} />;
 }
 
-// Custom Tab Bar
+
 function CustomTabBar({ state, descriptors, navigation }) {
   return (
     <View style={styles.tabBarContainer}>
@@ -27,7 +29,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
           }
         };
 
-        // Map route names to icon names
+        
         const iconMap = {
           index: 'home',
           categories: 'grid',
@@ -66,6 +68,21 @@ function CustomTabBar({ state, descriptors, navigation }) {
 }
 
 export default function TabsLayout() {
+  // Load Ionicons font
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+  });
+
+  // Prevent rendering until the font has loaded
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null; // Return null or a loading component until fonts are loaded
+  }
   return (
     <Tabs
       screenOptions={{ 

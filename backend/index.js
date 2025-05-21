@@ -17,10 +17,44 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configure CORS
+// Configure CORS - more permissive configuration
 app.use(cors({
-  origin: ['http://localhost:8081', 'http://localhost:19000'],
-  credentials: true
+  // Allow requests from any origin in development
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if(!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:8081',
+      'http://localhost:19000',
+      'http://localhost:8082',
+      'http://localhost:3000',
+      'http://127.0.0.1:62548',
+      'http://127.0.0.1:8081',
+      'http://127.0.0.1:8082',
+      'http://127.0.0.1:8083',
+      'http://127.0.0.1:3000',
+      'http://192.168.1.66:8082',
+      'http://192.168.1.66:8081',
+      'http://10.15.36.221:3000',
+      'http://10.15.36.221:8081',
+      'http://10.15.36.221:8082',
+      'http://10.15.36.221:19000',
+      'http://10.15.36.221:19006',
+      // Add any other origins you need
+    ];
+    
+    if(allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked request from:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use(express.json());
@@ -49,14 +83,16 @@ app.post('/auth/signup', async (req, res) => {
   try {
     console.log('Signup request received:', {
       email: req.body.email,
-      fullName: req.body.fullName
+      fullName: req.body.fullName,
+      phoneNumber: req.body.phoneNumber
     });
     
-    const { email, password, fullName } = req.body;
-    const user = await authService.signUp(email, password, fullName);
+    const { email, password, fullName, phoneNumber } = req.body;
+    const user = await authService.signUp(email, password, fullName, phoneNumber);
     
     console.log('Signup successful:', user);
-    res.status(201).json({ user });
+    // Make sure we're returning the user object with the token
+    res.status(201).json({ user: { ...user, token: user.token } });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(400).json({ error: error.message });

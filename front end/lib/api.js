@@ -1,7 +1,23 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import AsyncStorage from './storage';
 
-const API_BASE_URL = 'http://10.110.24.5:3001';
+// Dynamic API URL configuration to work on both web and iOS devices
+let API_BASE_URL;
+
+// Detect platform and environment to use the appropriate API URL
+if (Platform?.OS === 'web') {
+  // For web browsers, we can use relative URLs which will work with both localhost and deployed sites
+  API_BASE_URL = 'http://10.15.36.221:3001';
+} else {
+  // For iOS/Android devices, we need to use the computer's network IP
+  API_BASE_URL = 'http://10.15.36.221:3001';
+}
+
+// Allow overriding the API URL through environment variables or settings
+if (process.env.EXPO_PUBLIC_API_URL) {
+  API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+}
 
 // Add detailed logging
 console.log('API Base URL:', API_BASE_URL);
@@ -11,7 +27,9 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 5000, // Reduce timeout to 5 seconds
+  // Allow absolute URLs in case we need to switch endpoints
+  allowAbsoluteUrls: true
 });
 
 // Add a request interceptor to include auth token if available

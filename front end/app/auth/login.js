@@ -23,16 +23,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const testAPI = async () => {
-    try {
-      const response = await api.get('/');
-      console.log('API Test Response:', response.data);
-      Alert.alert('Success', 'API is working!');
-    } catch (error) {
-      console.error('API Test Error:', error);
-      Alert.alert('Error', error.message || 'Failed to connect to API');
-    }
-  };
+  // Navigation is handled in the handleLogin function
 
   const handleLogin = async () => {
     // Validate form inputs
@@ -57,18 +48,40 @@ export default function LoginScreen() {
         data: response.data
       });
 
-      if (response.data?.user?.token) {
-        // Store the token in AsyncStorage
-        await AsyncStorage.setItem('userToken', response.data.user.token);
-        console.log('Token stored successfully');
+      // Check for user data in response
+      if (response.data?.user) {
+        console.log('User data received:', response.data.user);
         
-        // Navigate to the main app
-        router.replace('/(tabs)');
-        
-        // Show success message
-        Alert.alert('Success', 'Login successful!');
+        try {
+          // Store the token if available
+          if (response.data.user.token) {
+            await AsyncStorage.setItem('userToken', response.data.user.token);
+            console.log('Token stored successfully');
+          } else if (response.data.user.uid || response.data.user.id) {
+            // If no token but we have user ID, store that instead
+            await AsyncStorage.setItem('userId', response.data.user.uid || response.data.user.id);
+            console.log('User ID stored instead of token');
+          }
+          
+          // Navigate immediately to ensure redirection happens
+          console.log('Navigating to home screen');
+          router.replace('/(tabs)');
+          
+          // Show success alert after navigation has been triggered
+          setTimeout(() => {
+            Alert.alert(
+              'Success', 
+              'Login successful!'
+            );
+          }, 100);
+        } catch (storageError) {
+          console.error('Error storing authentication data:', storageError);
+          // Even if storage fails, try to navigate anyway
+          router.replace('/(tabs)');
+        }
       } else {
-        throw new Error('No token received in response');
+        console.error('Invalid response format:', response.data);
+        throw new Error('Invalid response from server');
       }
     } catch (error) {
       console.error('Login error details:', {
@@ -93,12 +106,6 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity
-          style={[styles.button, styles.testButton]}
-          onPress={testAPI}
-        >
-          <Text style={styles.buttonText}>Test API Connection</Text>
-        </TouchableOpacity>
         {/* Logo and Header */}
         <View style={styles.header}>
           <Text style={styles.logoText}>
@@ -203,10 +210,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  testButton: {
-    backgroundColor: '#4CAF50',
-    marginBottom: 20,
-  },
+  // Styles for the main components
   scrollContent: {
     flexGrow: 1,
     padding: 24,
