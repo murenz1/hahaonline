@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { cn } from '../../utils/cn';
 import { X } from 'lucide-react';
-import { Transaction } from '../../services/financeService';
+import { Transaction } from '../../types';
 
 interface TransactionDetailsProps {
   transaction: Transaction;
@@ -90,7 +90,6 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
           {renderField('Category', transaction.category)}
           {renderField('Status', transaction.status)}
           {renderField('Reference', transaction.reference)}
-          {renderField('Notes', transaction.notes)}
           {renderField('Created At', transaction.createdAt)}
           {renderField('Updated At', transaction.updatedAt)}
         </dl>

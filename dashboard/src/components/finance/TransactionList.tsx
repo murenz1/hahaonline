@@ -9,7 +9,7 @@ interface TransactionListProps {
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
-  onViewDetails: (transaction: Transaction) => void;
+  onViewDetails?: (transaction: Transaction) => void;
 }
 
 export const TransactionList: React.FC<TransactionListProps> = ({

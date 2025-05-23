@@ -11,7 +11,7 @@ import {
   ArrowDownRight,
   Activity
 } from 'lucide-react';
-import { Transaction } from '../../services/financeService';
+import { Transaction } from '../../types';
 
 interface TransactionStatsProps {
   transactions: Transaction[];
