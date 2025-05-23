@@ -25,6 +25,20 @@ export const productsService = {
     }
   },
 
+  // Get featured products
+  async getFeaturedProducts() {
+    try {
+      const q = query(collection(db, 'products'), where('featured', '==', true));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Get all products
   async getProducts() {
     try {

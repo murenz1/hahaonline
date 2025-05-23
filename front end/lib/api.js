@@ -6,13 +6,11 @@ import AsyncStorage from './storage';
 let API_BASE_URL;
 
 // Detect platform and environment to use the appropriate API URL
-if (Platform?.OS === 'web') {
-  // For web browsers, we can use relative URLs which will work with both localhost and deployed sites
-  API_BASE_URL = 'http://10.15.36.221:3001';
-} else {
-  // For iOS/Android devices, we need to use the computer's network IP
-  API_BASE_URL = 'http://10.15.36.221:3001';
-}
+// Use the same API URL for both web and mobile platforms
+API_BASE_URL = 'http://10.110.24.5:3001';
+
+// Log the API URL for debugging
+console.log('Using API URL:', API_BASE_URL);
 
 // Allow overriding the API URL through environment variables or settings
 if (process.env.EXPO_PUBLIC_API_URL) {
@@ -23,11 +21,15 @@ if (process.env.EXPO_PUBLIC_API_URL) {
 console.log('API Base URL:', API_BASE_URL);
 
 const api = axios.create({
+  // Configure timeout and retry logic
+  timeout: 15000,
+  retryTimes: 3,
+  retryDelay: 1000,
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000, // Reduce timeout to 5 seconds
+  timeout: 15000, // Increased timeout to 15 seconds
   // Allow absolute URLs in case we need to switch endpoints
   allowAbsoluteUrls: true
 });

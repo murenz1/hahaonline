@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { authService } from './services/auth.js';
 import { productsService } from './services/products.js';
+import { categoriesService } from './services/categories.js';
 import { cartService } from './services/cart.js';
 import { ordersService } from './services/orders.js';
 
@@ -58,6 +59,45 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Categories endpoints
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await categoriesService.getCategories();
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Products endpoints
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await productsService.getProducts();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/products/featured', async (req, res) => {
+  try {
+    const products = await productsService.getFeaturedProducts();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/products/category/:categoryId', async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const products = await productsService.getProductsByCategory(categoryId);
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Add error handling middleware
 app.use((err, req, res, next) => {

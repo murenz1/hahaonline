@@ -17,264 +17,78 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
+import productsApi from '../../lib/productsApi';
 
-// Mock data for grocery categories
-const categories = [
-  {
-    id: 1,
-    name: {
-      English: "Vegetables",
-      Kinyarwanda: "Imboga",
-      French: "Légumes"
-    },
-    icon: "leaf-outline"
-  },
-  {
-    id: 2,
-    name: {
-      English: "Fruits",
-      Kinyarwanda: "Imbuto",
-      French: "Fruits"
-    },
-    icon: "nutrition-outline"
-  },
-  {
-    id: 3,
-    name: {
-      English: "Grains & Cereals",
-      Kinyarwanda: "Ibinyampeke",
-      French: "Céréales"
-    },
-    icon: "basket-outline"
-  },
-  {
-    id: 4,
-    name: {
-      English: "Dairy Products",
-      Kinyarwanda: "Amata n'Ibiyakomokaho",
-      French: "Produits Laitiers"
-    },
-    icon: "water-outline"
-  },
-  {
-    id: 5,
-    name: {
-      English: "Meat & Fish",
-      Kinyarwanda: "Inyama n'Amafi",
-      French: "Viande et Poisson"
-    },
-    icon: "restaurant-outline"
-  },
-  {
-    id: 6,
-    name: {
-      English: "Spices & Seasonings",
-      Kinyarwanda: "Ibirungo",
-      French: "Épices et Assaisonnements"
-    },
-    icon: "flame-outline"
-  },
-  {
-    id: 7,
-    name: {
-      English: "Local Produce",
-      Kinyarwanda: "Ibikorerwa mu Rwanda",
-      French: "Produits Locaux"
-    },
-    icon: "home-outline"
-  },
-  {
-    id: 8,
-    name: {
-      English: "Organic Foods",
-      Kinyarwanda: "Ibiryo Siyanatire",
-      French: "Aliments Biologiques"
-    },
-    icon: "leaf-outline"
-  }
-];
+const API_BASE_URL = 'http://localhost:3000'; // Update this with your actual API URL
 
-// Featured products
-const featuredProducts = [
-  {
-    id: 1,
-    name: "Fresh Avocados",
-    price: 4500,
-    unit: "kg",
-    image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-    categoryId: 1,
-    rating: 4.5,
-    discount: 10
-  },
-  {
-    id: 2,
-    name: "Fresh Bell Peppers Mix",
-    price: 3200,
-    unit: "kg",
-    image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
-    categoryId: 1,
-    rating: 4.8,
-    discount: 15
-  },
-  { 
-    id: '3', 
-    name: 'Tomatoes', 
-    price: 3500, 
-    unit: 'kg',
-    rating: 4.5, 
-    image: 'https://images.unsplash.com/photo-1566702593104-697cc456a99e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 10 
-  },
-  { 
-    id: '4', 
-    name: 'Red Onions', 
-    price: 1800, 
-    unit: 'kg',
-    rating: 4.4, 
-    image: 'https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: null 
-  },
-  { 
-    id: '5', 
-    name: 'Green Beans', 
-    price: 2200, 
-    unit: 'kg',
-    rating: 4.6, 
-    image: 'https://images.unsplash.com/photo-1567375698348-5d9d5ae99de0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: null 
-  },
-  { 
-    id: '6', 
-    name: 'Irish Potatoes', 
-    price: 1500, 
-    unit: 'kg',
-    rating: 4.5, 
-    image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 8 
-  },
-  { 
-    id: '7', 
-    name: 'Cooking Banana (Matoke)', 
-    price: 5000, 
-    unit: 'bunch',
-    rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: null 
-  },
-  { 
-    id: '8', 
-    name: 'Dry Beans', 
-    price: 3000, 
-    unit: 'kg',
-    rating: 4.6, 
-    image: 'https://images.unsplash.com/photo-1536304017280-c44870c1d9c3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 5 
-  },
-];
+export default function HomeScreen() {
+  // Router and UI state
+  const router = useRouter();
+  const windowWidth = Dimensions.get('window').width;
+  const notificationTimeout = useRef(null);
+  
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [showNoResults, setShowNoResults] = useState(false);
+  
+  // Location state
+  const [locationPermission, setLocationPermission] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState('Kigali, Rwanda');
+  const [locationError, setLocationError] = useState(null);
+  const [locationDetails, setLocationDetails] = useState({
+    street: '',
+    district: '',
+    city: 'Kigali',
+    country: 'Rwanda',
+    coordinates: null
+  });
+  
+  // UI Modal state
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Language state
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  
+  // Cart state
+  const [cart, setCart] = useState([]);
+  const [showCartNotification, setShowCartNotification] = useState(false);
+  
+  // Product state
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [specialOffers, setSpecialOffers] = useState([]);
+  const [localFruits, setLocalFruits] = useState([]);
+  const [previousOrder, setPreviousOrder] = useState({});
+  
+  // Notifications
+  const [notifications, setNotifications] = useState([
+    { 
+      id: '1', 
+      title: 'Welcome!', 
+      message: 'Welcome to HahaOnline. Enjoy fresh groceries delivered to your door.', 
+      read: false 
+    },
+    { 
+      id: '2', 
+      title: 'Special Offer', 
+      message: '25% off on all vegetables today!', 
+      read: false 
+    },
+    { 
+      id: '3', 
+      title: 'Order Update', 
+      message: 'Your recent order has been delivered.', 
+      read: true 
+    },
+  ]);
 
-// Special offers
-const specialOffers = [
-  { 
-    id: '1', 
-    name: 'Farm Fresh Eggs', 
-    price: 3200, 
-    unit: 'dozen',
-    rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 20 
-  },
-  { 
-    id: '2', 
-    name: 'Organic Spinach', 
-    price: 2100, 
-    unit: 'bunch',
-    rating: 4.7, 
-    image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 15 
-  },
-  { 
-    id: '3', 
-    name: 'Fresh Milk', 
-    price: 2600, 
-    unit: '1L',
-    rating: 4.8, 
-    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 10 
-  },
-  { 
-    id: '4', 
-    name: 'Sweet Potatoes', 
-    price: 1800, 
-    unit: 'kg',
-    rating: 4.5, 
-    image: 'https://images.unsplash.com/photo-1596097635121-14b63b7a0c19?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 12 
-  },
-  { 
-    id: '5', 
-    name: 'Maize Flour', 
-    price: 2500, 
-    unit: 'kg',
-    rating: 4.6, 
-    image: 'https://images.unsplash.com/photo-1587049352851-8d4e89133481?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 18 
-  },
-];
-
-// Additional local fruits
-const localFruits = [
-  { 
-    id: '1', 
-    name: 'Pineapple', 
-    price: 1500, 
-    unit: 'each',
-    rating: 4.8, 
-    image: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: null 
-  },
-  { 
-    id: '2', 
-    name: 'Passion Fruit', 
-    price: 4000, 
-    unit: 'kg',
-    rating: 4.7, 
-    image: 'https://images.unsplash.com/photo-1604790262497-70e34d1e2927?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 5 
-  },
-  { 
-    id: '3', 
-    name: 'Tree Tomato', 
-    price: 3200, 
-    unit: 'kg',
-    rating: 4.5, 
-    image: 'https://images.unsplash.com/photo-1591768739712-53cb0997dd6a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: null 
-  },
-  { 
-    id: '4', 
-    name: 'Mango', 
-    price: 1200, 
-    unit: 'each',
-    rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1605027690505-4b0d9fe23d8a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 10 
-  },
-];
-
-const previousOrder = {
-  status: 'Delivered',
-  date: 'On Wed, 27 Jul 2022',
-  items: [
-    { id: '1', image: 'https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80' },
-    { id: '2', image: 'https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80' },
-    { id: '3', image: 'https://images.unsplash.com/photo-1566702593104-697cc456a99e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80' },
-  ],
-  discount: '10% OFF',
-  moreItems: 5,
-};
-
-// Add translations for key terms
-const translations = {
+  // Add translations for key terms
+  const translations = {
   English: {
     // Navigation & Headers
     cart: "Cart",
@@ -543,114 +357,82 @@ const translations = {
   }
 };
 
-// Add more featured products
-const moreProducts = [
-  { 
-    id: '9', 
-    name: 'Sweet Pineapple', 
-    price: 2000, 
-    unit: 'each',
-    rating: 4.8, 
-    image: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: 10 
-  },
-  { 
-    id: '10', 
-    name: 'Fresh Carrots', 
-    price: 1500, 
-    unit: 'kg',
-    rating: 4.6, 
-    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80', 
-    discount: null 
+// Static data for featured products
+const featuredProductsData = [
+    {
+      id: '1',
+      name: 'Sweet Pineapple',
+      price: 3.99,
+      unit: 'piece',
+      image: 'https://example.com/pineapple.jpg',
+      rating: 4.8
+    },
+    {
+      id: '2',
+      name: 'Fresh Carrots',
+      price: 1.99,
+      unit: 'kg',
+      image: 'https://example.com/carrots.jpg',
+      rating: 4.6
   },
   {
-    id: '11',
-    name: 'Green Peppers',
-    price: 2200,
+    id: '2',
+    name: 'Fresh Carrots',
+    price: 1.99,
     unit: 'kg',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1509377244-b9820f59c9e6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-    discount: 15
-  },
-  {
-    id: '12',
-    name: 'Fresh Ginger',
-    price: 2800,
-    unit: 'kg',
-    rating: 4.5,
-    image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-    discount: null
-  },
-  {
-    id: '13',
-    name: 'Red Cabbage',
-    price: 1800,
-    unit: 'each',
-    rating: 4.4,
-    image: 'https://images.unsplash.com/photo-1506807803488-8eafc15316c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-    discount: 8
-  },
-  {
-    id: '14',
-    name: 'Fresh Garlic',
-    price: 3000,
-    unit: 'kg',
-    rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1615477550927-6e7cdf2d3a8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80',
-    discount: null
+    image: 'https://example.com/carrots.jpg',
+    rating: 4.6
   }
 ];
 
-// Merge with existing featured products
-const allFeaturedProducts = [...featuredProducts, ...moreProducts];
+  // Initialize state with featured products
+  const [moreProducts, setMoreProducts] = useState(featuredProductsData);
 
-export default function HomeScreen() {
-  const router = useRouter();
-  const [searchText, setSearchText] = useState('');
-  const [locationPermission, setLocationPermission] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState('Kigali, Rwanda');
-  const [showLocationModal, setShowLocationModal] = useState(false);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
-  const [cart, setCart] = useState([]);
-  const [showCartNotification, setShowCartNotification] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { 
-      id: '1', 
-      title: 'Welcome!', 
-      message: 'Welcome to HahaOnline. Enjoy fresh groceries delivered to your door.', 
-      read: false 
-    },
-    { 
-      id: '2', 
-      title: 'Special Offer', 
-      message: '25% off on all vegetables today!', 
-      read: false 
-    },
-    { 
-      id: '3', 
-      title: 'Order Update', 
-      message: 'Your recent order has been delivered.', 
-      read: true 
-    },
-  ]);
-  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-  const windowWidth = Dimensions.get('window').width;
-  const notificationTimeout = useRef(null);
-  const [searchResults, setSearchResults] = useState(null);
-  const [showNoResults, setShowNoResults] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [locationDetails, setLocationDetails] = useState({
-    street: '',
-    district: '',
-    city: 'Kigali',
-    country: 'Rwanda',
-    coordinates: null
-  });
-  const [locationError, setLocationError] = useState(null);
+  // Additional products will be fetched from the backend
+  useEffect(() => {
+    const fetchMoreProducts = async () => {
+      try {
+        const response = await axios.get('/api/products/featured');
+        setMoreProducts([...featuredProductsData, ...response.data]);
+      } catch (error) {
+        console.error('Error fetching more products:', error);
+      }
+    };
+    
+    fetchMoreProducts();
+  }, []);
+
+  // Function to fetch data
+  const fetchData = async () => {
+    try {
+      // Fetch products
+      const response = await fetch(`${API_BASE_URL}/api/products`);
+      const allProducts = await response.json();
+      
+      // Filter featured products for special offers
+      const featured = allProducts.filter(p => p.featured);
+      setSpecialOffers(featured);
+      
+      // Set remaining products
+      setProducts(allProducts.filter(p => !p.featured));
+      
+      // Fetch categories
+      const catResponse = await fetch(`${API_BASE_URL}/api/categories`);
+      const categoriesData = await catResponse.json();
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      Alert.alert('Error', 'Failed to load data. Please try again.');
+    }
+  };
   
-  // Deals/Offers for the slider
-  const deals = [
+  // Call fetchData when component mounts
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
+  // Featured products data for promotions
+  const promotionalData = [
     {
       id: '1',
       title: 'Weekend Special',
@@ -674,6 +456,30 @@ export default function HomeScreen() {
     }
   ];
 
+  // Initialize state for refreshing and deals
+  const [refreshing, setRefreshing] = useState(false);
+  const [deals, setDeals] = useState([]);
+
+  // Handle refresh
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchData().then(() => setRefreshing(false));
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (lang) => {
+    setLanguage(lang);
+    setShowLanguageModal(false);
+  };
+
+  // Handle product press
+  const handleProductPress = (product) => {
+    router.push({
+      pathname: '/product/[id]',
+      params: { id: product.id }
+    });
+  };
+
   useEffect(() => {
     // Simulate fetching the user's current location
     setTimeout(() => {
@@ -688,145 +494,9 @@ export default function HomeScreen() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleCategoryPress = (category) => {
-    router.push('/categories');
-  };
-
-  const getUnreadNotificationCount = () => {
-    return notifications.filter(n => !n.read).length;
-  };
-
-  const markNotificationAsRead = (id) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
-
-  const handleNotificationPress = (notification) => {
-    markNotificationAsRead(notification.id);
-    // Additional logic based on notification type could go here
-    setShowNotificationsModal(false);
-  };
-
-  const requestLocationPermission = () => {
-    setShowLocationModal(true);
-  };
-
-  const handleUseCurrentLocation = () => {
-    // This would use device location in a real app
-    setCurrentLocation('Kigali, Rwanda');
-    setLocationPermission(true);
-    setShowLocationModal(false);
-  };
-
-  const handleSelectLocation = (location) => {
-    setCurrentLocation(location);
-    setShowLocationModal(false);
-  };
-
-  const closeLocationModal = () => {
-    setShowLocationModal(false);
-  };
-
-  // Format price in Rwandan Francs
-  const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
-  // Add product to cart
-  const addToCart = (product) => {
-    // Check if product is already in cart
-    const existingItemIndex = cart.findIndex(item => item.id === product.id);
-    
-    if (existingItemIndex >= 0) {
-      // Increment quantity if already in cart
-      const updatedCart = [...cart];
-      updatedCart[existingItemIndex].quantity += 1;
-      setCart(updatedCart);
-    } else {
-      // Add new product to cart
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-    
-    // Show notification
-    setShowCartNotification(true);
-    
-    // Clear previous timeout if exists
-    if (notificationTimeout.current) {
-      clearTimeout(notificationTimeout.current);
-    }
-    
-    // Hide notification after 2 seconds
-    notificationTimeout.current = setTimeout(() => {
-      setShowCartNotification(false);
-    }, 2000);
-  };
-
-  const getTotalCartItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  // Function to get detailed location
-  const getDetailedLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationError(getTranslation('locationPermissionDenied'));
-        return;
-      }
-
-      setLocationPermission(true);
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      
-      // Get address details from coordinates
-      const [address] = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude
-      });
-
-      setLocationDetails({
-        street: address.street || '',
-        district: address.district || address.subregion || '',
-        city: address.city || 'Kigali',
-        country: address.country || 'Rwanda',
-        coordinates: { latitude, longitude }
-      });
-
-      setCurrentLocation(
-        `${address.street ? address.street + ', ' : ''}${address.district || address.subregion || ''}, ${address.city || 'Kigali'}`
-      );
-    } catch (error) {
-      setLocationError(getTranslation('locationError'));
-      console.error('Location error:', error);
-    }
-  };
-
-  // Update useEffect for location
-  useEffect(() => {
-    if (!locationPermission) {
-      getDetailedLocation();
-    }
-  }, []);
-
-  // Function to translate product names and details
-  const getTranslatedProduct = (product) => {
-    const translatedName = getTranslation(product.name.toLowerCase().replace(/\s+/g, ''));
-    const translatedUnit = getTranslation(product.unit);
-    
-    return {
-      ...product,
-      name: translatedName,
-      unit: translatedUnit,
-      translatedPrice: `${formatPrice(product.price)} RWF/${translatedUnit}`,
-      translatedDiscount: product.discount ? `${product.discount}% ${getTranslation('off')}` : null
-    };
-  };
-
-  // Update ProductCard component to use translated product
-  const ProductCard = ({ product, language }) => {
-    const router = useRouter();
+  
+  // Product card component
+  const ProductCard = ({ product }) => {
     const translatedProduct = {
       ...product,
       name: translations[language]?.[product.name] || product.name,
@@ -1069,7 +739,7 @@ export default function HomeScreen() {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.productsContainer}
                   >
-                    {allFeaturedProducts.slice(0, 5).map((product) => (
+                    {featuredProductsData.slice(0, 5).map((product) => (
                       <ProductCard 
                         key={product.id} 
                         product={product} 
@@ -1134,7 +804,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.productsContainer}
         >
-          {featuredProducts.map((product) => (
+          {featuredProductsData.map((product) => (
             <ProductCard 
               key={product.id} 
               product={product} 
@@ -1231,8 +901,8 @@ export default function HomeScreen() {
                   <View style={styles.mapPin}>
                     <Ionicons name="location" size={30} color="#4CAF50" />
                   </View>
-          </View>
-          
+                </View>
+                
                 <View style={styles.locationDetails}>
                   <Text style={styles.locationDetailText}>
                     {locationDetails.street && `${locationDetails.street}, `}
@@ -1433,7 +1103,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F5F5F5',
   },
   locationIconContainer: {
     width: 40,
@@ -1839,7 +1510,7 @@ const styles = StyleSheet.create({
     right: 70,
     width: 180,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -2040,5 +1711,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 16,
-  },
-}); 
+  }
+});
